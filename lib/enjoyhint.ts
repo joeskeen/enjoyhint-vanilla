@@ -212,7 +212,6 @@ export class EnjoyHint {
         const customEventName = this.makeEventName(stepData.event);
         this.show();
         this.$eventElement = $element;
-        console.log("stepAction", stepData);
 
         if (stepData.eventSelector) {
           this.$eventElement = document.querySelector(stepData.eventSelector);
