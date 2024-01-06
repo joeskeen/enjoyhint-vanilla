@@ -1,0 +1,225 @@
+$duration: 0.3s;
+
+$zIndexBase: 100;
+$zIndexLabel: 107;
+$zIndexEnjoyhint: 1010;
+$zIndexDisableEvents: 1011;
+$zIndexBtn: 1012;
+
+.enjoyhint {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: $zIndexEnjoyhint;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hide {
+  display: none;
+}
+
+.disableEvents {
+  position: absolute;
+  width: 2000px;
+  height: 1500px;
+  z-index: $zIndexDisableEvents;
+  pointer-events: all;
+}
+
+.nextBtn,
+.prevBtn,
+.skipBtn {
+  min-width: 100px;
+  position: absolute;
+  z-index: $zIndexBtn;
+  pointer-events: all;
+  box-sizing: content-box;
+}
+
+.btn.closeBtn {
+  display: inline-block;
+  position: absolute;
+  z-index: $zIndexBtn;
+  pointer-events: all;
+  box-sizing: content-box;
+  width: 0.3em;
+  height: 0.3em;
+  border: none;
+  border-radius: 1em;
+  font: 400 8em / normal Arial, Helvetica, sans-serif;
+  color: rgba(0, 0, 0, 1);
+  text-overflow: clip;
+  background: rgba(0, 0, 0, 0);
+  border: 2px solid rgba(33, 224, 163, 1);
+
+  &::before {
+    display: inline-block;
+    box-sizing: content-box;
+    width: 73%;
+    height: 2px;
+    position: absolute;
+    content: "";
+    top: 48%;
+    left: 14%;
+    border: none;
+    font: normal 100% / normal Arial, Helvetica, sans-serif;
+    color: rgba(0, 0, 0, 1);
+    text-overflow: clip;
+    background: #fff;
+    text-shadow: none;
+    transform: rotateZ(45deg);
+  }
+
+  &::after {
+    display: inline-block;
+    box-sizing: content-box;
+    width: 73%;
+    height: 2px;
+    position: absolute;
+    content: "";
+    top: 46%;
+    left: 15%;
+    border: none;
+    font: normal 100% / normal Arial, Helvetica, sans-serif;
+    color: rgba(0, 0, 0, 1);
+    text-overflow: clip;
+    background: #fff;
+    text-shadow: none;
+    transform: rotateZ(-45deg);
+  }
+}
+
+.btn {
+  box-sizing: content-box;
+  width: 150px;
+  height: 40px;
+  cursor: pointer;
+  margin: 0 auto;
+  border: 2px solid rgb(30, 205, 151);
+  border-radius: 40px;
+  font: normal normal normal 17px/40px "Advent Pro", Helvetica, sans-serif;
+  color: rgb(30, 205, 151);
+  text-align: center;
+  text-overflow: clip;
+  letter-spacing: 1px;
+  background: rgba(0, 0, 0, 0);
+  transition: background-color $duration cubic-bezier(0, 0, 0, 0),
+    color $duration cubic-bezier(0, 0, 0, 0),
+    width $duration cubic-bezier(0, 0, 0, 0),
+    border-width $duration cubic-bezier(0, 0, 0, 0),
+    border-color $duration cubic-bezier(0, 0, 0, 0);
+
+  &:hover {
+    color: rgba(255, 255, 255, 1);
+    background: rgb(30, 205, 151);
+  }
+
+  &:active {
+    border: 2px solid rgba(33, 224, 163, 1);
+    background: rgba(33, 224, 163, 1);
+    transition: none;
+  }
+}
+
+.enjoyhint div.canvas-container {
+  position: absolute;
+}
+
+.canvas {
+  position: absolute;
+  z-index: $zIndexBase;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#konvaContainer {
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.svgWrapper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: $zIndexBase;
+  transition: opacity 400ms cubic-bezier(0.42, 0, 0.58, 1);
+}
+.svgWrapper svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.svgTransparent .svgWrapper,
+.svgTransparent .label {
+  opacity: 0;
+}
+
+.label {
+  display: inline-block;
+  max-width: 80%;
+  position: absolute;
+  overflow: hidden;
+  text-align: center;
+  color: white;
+  z-index: $zIndexLabel;
+  font-size: 22px;
+  font-family: "Arial", sans-serif;
+  transition: opacity 400ms cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+@media (max-width: 640px) {
+  .label {
+    font-size: 16px;
+  }
+
+  .nextBtn {
+    font-size: 200%;
+    color: #fff;
+    line-height: 1.2em;
+    min-width: 0px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+  }
+
+  .prevBtn {
+    font-size: 200%;
+    color: #fff;
+    line-height: 1.2em;
+    min-width: 0px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+  }
+
+  .skipBtn {
+    display: none;
+  }
+}
+
+div.konvaContent {
+  position: absolute !important;
+}
+
+.skipBtn {
+  position: fixed;
+}
+
+.label {
+  display: inline-block;
+  text-align: center;
+  max-width: 80%;
+}

@@ -1,69 +1,21 @@
-import { EnjoyHintImpl } from "./jquery.enjoyhint.js";
+import { RenderData } from "./RenderData.js";
+import { EnjoyHintImpl, ICircleOptions } from "./jquery.enjoyhint.js";
+import {
+  IButtonConfiguration,
+  IStepConfiguration,
+} from "./step-configuration.js";
+import { classes as cl, ids } from "./selectors.js";
+import { registerEvent, unregisterEvent, unregisterEvents } from "./events.js";
 
-interface IEnjoyHintOptions {
+export interface IEnjoyHintOptions {
   onStart?: () => void;
   onEnd?: () => void;
   onSkip?: () => void;
   onNext?: () => void;
+  btnPrevText?: string;
   btnNextText?: string;
   btnSkipText?: string;
   backgroundColor?: string;
-}
-
-interface ShapeData {
-  enjoyHintElementSelector?: string;
-  centerX?: number;
-  centerY?: number;
-  shape?: string;
-  radius?: number;
-  width?: number;
-  height?: number;
-  text?: string;
-  arrowColor?: string;
-  top?: number;
-  bottom?: number;
-  left?: number;
-  right?: number;
-  margin?: number;
-  scroll?: number;
-}
-
-interface StepData {
-  [key: string]: any;
-
-  shape: string;
-  showPrev: boolean;
-  showSkip: boolean;
-  arrowColor: string;
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-  scroll: number;
-  margin: number;
-  radius: number;
-  showNext: boolean;
-  eventSelector: string;
-  keyCode?: string;
-  prevButton?: {
-    className?: string;
-    text?: string;
-  };
-  nextButton?: {
-    className?: string;
-    text?: string;
-  };
-  skipButton?: {
-    className?: string;
-    text?: string;
-  };
-  scrollAnimationSpeed?: number;
-  onBeforeStart?: () => void;
-  timeout?: number;
-  selector?: string;
-  event?: string;
-  eventType?: string;
-  description?: string;
 }
 
 export class EnjoyHint {
@@ -72,6 +24,7 @@ export class EnjoyHint {
     onEnd: () => {},
     onSkip: () => {},
     onNext: () => {},
+    btnPrevText: "Previous",
     btnNextText: "Next",
     btnSkipText: "Skip",
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -80,7 +33,7 @@ export class EnjoyHint {
   readonly options: IEnjoyHintOptions;
   readonly originalElementOverflow: string;
 
-  data: StepData[] = [];
+  data: IStepConfiguration[] = [];
   currentStepIndex = 0;
   $eventElement?: HTMLElement | null;
   nextUserClass: string | undefined;
@@ -99,10 +52,9 @@ export class EnjoyHint {
     this.options = { ...EnjoyHint.defaults, ...options };
     this.originalElementOverflow = getComputedStyle(element).overflow;
 
-    
     this.init();
-    
-    window.addEventListener("resize", () => {
+
+    registerEvent(window, "resize", () => {
       if (this.$eventElement != null) {
         this.redoEventsNearRect(this.$eventElement.getBoundingClientRect());
       }
@@ -114,7 +66,7 @@ export class EnjoyHint {
   };
 
   private readonly inputHandler: EventListener = (event: Event) => {
-    if (event instanceof KeyboardEvent && event.code !== this.currentStep.keyCode) {
+    if (event instanceof KeyboardEvent && event.key !== this.currentStep.key) {
       return;
     }
 
@@ -123,13 +75,13 @@ export class EnjoyHint {
   };
 
   private init() {
-    if (document.querySelector(".enjoyhint")) {
-      document.querySelector(".enjoyhint")?.remove();
+    if (cl.enjoyHint.element()) {
+      cl.enjoyHint.element()?.remove();
     }
 
     this.element.style.overflow = "hidden";
 
-    document.addEventListener("touchmove", this.lockTouch);
+    registerEvent(document, "touchmove", this.lockTouch);
 
     const opts = {
       onNextClick: () => {
@@ -148,39 +100,42 @@ export class EnjoyHint {
   }
 
   private destroyEnjoy() {
-    document.querySelector(".enjoyhint")?.remove();
+    unregisterEvents();
+    cl.enjoyHint.element()?.remove();
     this.element.style.overflow = this.originalElementOverflow;
-    document.removeEventListener("touchmove", this.lockTouch);
   }
 
   private clear() {
-    const $nextBtn = document.querySelector<HTMLButtonElement>(
-      ".enjoyhint_next_btn"
-    )!;
-    const $skipBtn = document.querySelector<HTMLButtonElement>(
-      ".enjoyhint_skip_btn"
-    )!;
-    const $prevBtn = document.querySelector<HTMLButtonElement>(
-      ".enjoyhint_prev_btn"
-    )!;
-
-    if (this.currentStep?.prevButton?.className) {
-      $prevBtn.classList.remove(this.currentStep?.prevButton?.className || "");
-    }
-    if (this.currentStep?.nextButton?.className) {
-      $nextBtn.classList.remove(this.currentStep?.nextButton?.className || "");
-    }
-    $nextBtn.textContent = this.options.btnNextText ?? "";
-    if (this.currentStep?.skipButton?.className) {
-      $skipBtn.classList.remove(this.currentStep?.skipButton?.className || "");
-    }
-    $skipBtn.textContent = this.options.btnSkipText ?? "";
+    [
+      {
+        button: cl.previousBtn.element()!,
+        className: this.currentStep?.prevButton?.className,
+        text: this.currentStep?.prevButton?.text ?? this.options.btnPrevText,
+      },
+      {
+        button: cl.nextBtn.element()!,
+        className: this.currentStep?.nextButton?.className,
+        text: this.currentStep?.nextButton?.text ?? this.options.btnNextText,
+      },
+      {
+        button: cl.skipBtn.element()!,
+        className: this.currentStep?.skipButton?.className,
+        text: this.currentStep?.skipButton?.text ?? this.options.btnSkipText,
+      },
+    ]
+      .filter((x) => !!x.button)
+      .forEach(({ button, className, text }) => {
+        if (className) {
+          button.classList.remove(className);
+        }
+        button.textContent = text ?? '';
+      });
   }
 
   private hideCurrentHint() {
-    this.renderCircle([]);
-    document.querySelector("#enjoyhint_label")?.remove();
-    document.querySelector("#enjoyhint_arrpw_line")?.remove();
+    this.renderCircle();
+    ids.label.element()?.remove();
+    ids.arrowLine.element()?.remove();
     this.hidePrev();
     this.hideNext();
     this.hideSkip();
@@ -196,12 +151,20 @@ export class EnjoyHint {
 
     this.options.onNext?.();
 
-    const $enjoyhint = document.querySelector(".enjoyhint");
+    const $enjoyhint = cl.enjoyHint.element();
 
-    $enjoyhint?.classList.remove(`enjoyhint-step-${this.currentStepIndex}`);
-    $enjoyhint?.classList.remove(`enjoyhint-step-${this.currentStepIndex + 1}`);
-    $enjoyhint?.classList.remove(`enjoyhint-step-${this.currentStepIndex + 2}`);
-    $enjoyhint?.classList.add(`enjoyhint-step-${this.currentStepIndex + 1}`);
+    $enjoyhint?.classList.remove(
+      `${cl.enjoyHint.name}-step-${this.currentStepIndex}`
+    );
+    $enjoyhint?.classList.remove(
+      `${cl.enjoyHint.name}-step-${this.currentStepIndex + 1}`
+    );
+    $enjoyhint?.classList.remove(
+      `${cl.enjoyHint.name}-step-${this.currentStepIndex + 2}`
+    );
+    $enjoyhint?.classList.add(
+      `${cl.enjoyHint.name}-step-${this.currentStepIndex + 1}`
+    );
 
     const stepData = this.data[this.currentStepIndex];
 
@@ -213,17 +176,17 @@ export class EnjoyHint {
 
     setTimeout(() => {
       if (!stepData.selector) {
-        for (const prop of Object.keys(stepData)) {
-          if (stepData.hasOwnProperty(prop) && prop.split(" ")[1]) {
-            const [event, selector] = prop.split(" ");
+        for (const [eventSelector, description] of Object.entries(stepData)) {
+          if (eventSelector.includes(" ")) {
+            const [event, selector] = eventSelector.split(" ");
             stepData.selector = selector;
-            stepData.event = event;
+            stepData.event = event as keyof HTMLElementEventMap;
 
             if (event == "next" || event == "auto" || event == "custom") {
               stepData.eventType = event;
             }
 
-            stepData.description = stepData[prop];
+            stepData.description = description;
           }
         }
       }
@@ -258,18 +221,25 @@ export class EnjoyHint {
         const customEventName = this.makeEventName(stepData.event);
         this.show();
         this.$eventElement = $element;
+        console.log("stepAction", stepData);
 
         if (stepData.eventSelector) {
           this.$eventElement = document.querySelector(stepData.eventSelector);
         }
 
-        this.$eventElement?.removeEventListener(standardEventName, this.stepAction);
-        this.$eventElement?.removeEventListener(customEventName, this.stepAction);
+        this.$eventElement?.removeEventListener(
+          standardEventName,
+          this.stepAction
+        );
+        this.$eventElement?.removeEventListener(
+          customEventName,
+          this.stepAction
+        );
 
-        this.$eventElement?.removeEventListener("keydown", this.inputHandler);
+        unregisterEvent(this.$eventElement, "keydown", this.inputHandler);
 
-        if (!stepData.eventType && stepData.event == "key") {
-          this.$eventElement?.addEventListener("keydown", this.inputHandler);
+        if (stepData.eventType === "key") {
+          registerEvent(this.$eventElement, "keydown", this.inputHandler);
         }
 
         if (!stepData.showNext) {
@@ -293,9 +263,7 @@ export class EnjoyHint {
         }
 
         if (stepData.nextButton) {
-          const $nextBtn = document.querySelector<HTMLButtonElement>(
-            ".enjoyhint_next_btn"
-          )!;
+          const $nextBtn = cl.nextBtn.element()!;
 
           $nextBtn.classList.add(stepData.nextButton.className || "");
           $nextBtn.textContent = stepData.nextButton.text || "Next";
@@ -303,9 +271,7 @@ export class EnjoyHint {
         }
 
         if (stepData.prevButton) {
-          const $prevBtn = document.querySelector<HTMLButtonElement>(
-            ".enjoyhint_prev_btn"
-          )!;
+          const $prevBtn = cl.previousBtn.element()!;
 
           $prevBtn.classList.add(stepData.prevButton.className || "");
           $prevBtn.textContent = stepData.prevButton.text || "Previous";
@@ -313,9 +279,7 @@ export class EnjoyHint {
         }
 
         if (stepData.skipButton) {
-          const $skipBtn = document.querySelector<HTMLButtonElement>(
-            ".enjoyhint_skip_btn"
-          )!;
+          const $skipBtn = cl.skipBtn.element()!;
 
           $skipBtn.classList.add(stepData.skipButton.className || "");
           $skipBtn.textContent = stepData.skipButton.text || "Skip";
@@ -336,9 +300,9 @@ export class EnjoyHint {
               return;
 
             case "custom":
-              this.$eventElement?.addEventListener(customEventName, () => {
+              registerEvent(this.$eventElement, customEventName, () => {
                 this.currentStepIndex++;
-                this.$eventElement?.removeEventListener(customEventName, this.stepAction);
+                unregisterEvent(this.$eventElement, customEventName, this.stepAction);
                 this.stepAction();
               });
 
@@ -349,10 +313,7 @@ export class EnjoyHint {
               break;
           }
         } else {
-          this.$eventElement?.addEventListener(
-            standardEventName,
-            this.inputHandler
-          );
+          registerEvent(this.$eventElement, standardEventName, this.inputHandler);
         }
 
         const maxHabarites = Math.max(
@@ -371,7 +332,7 @@ export class EnjoyHint {
           y: offset.top + Math.round(h / 2) - window.scrollY,
         };
 
-        const shapeData: ShapeData = {
+        const shapeData: RenderData = {
           enjoyHintElementSelector: stepData.selector,
           centerX: coords.x,
           centerY: coords.y,
@@ -382,7 +343,9 @@ export class EnjoyHint {
           left: stepData.left,
           right: stepData.right,
           margin: stepData.margin,
-          scroll: stepData.scroll,
+          height: NaN,
+          width: NaN,
+          radius: NaN,
         };
 
         const customBtnProps = {
@@ -434,11 +397,11 @@ export class EnjoyHint {
     return name + (isCustom ? "custom" : "") + ".enjoy_hint";
   }
 
-  private stop() {
+  stop() {
     this.skipAll();
   }
 
-  private reRunScript(cs: number) {
+  reRunScript(cs: number) {
     this.currentStepIndex = cs;
     this.stepAction();
   }
@@ -453,15 +416,15 @@ export class EnjoyHint {
     this.stepAction();
   }
 
-  private setCurrentStep(cs: number) {
+  setCurrentStep(cs: number) {
     this.currentStepIndex = cs;
   }
 
-  private getCurrentStep() {
+  getCurrentStep() {
     return this.currentStepIndex;
   }
 
-  private trigger(eventName: string) {
+  trigger(eventName: string) {
     switch (eventName) {
       case "next":
         this.nextStep();
@@ -478,7 +441,7 @@ export class EnjoyHint {
     }
   }
 
-  set(data: StepData[]) {
+  set(data: IStepConfiguration[]) {
     if (!(data instanceof Array) || data.length < 1) {
       throw new Error("Configurations list isn't correct.");
     }
@@ -501,12 +464,12 @@ export class EnjoyHint {
   showNext() {
     this.instance.showNextBtn();
   }
-  redoEventsNearRect(arg0: any) {
+  redoEventsNearRect(arg0: DOMRect) {
     this.instance.disableEventsNearRect(arg0);
   }
 
-  renderCircle(arg0: any) {
-    this.instance.renderCircle(arg0);
+  renderCircle(circle?: ICircleOptions) {
+    this.instance.renderCircle(circle);
   }
   hidePrev() {
     this.instance.hidePrevBtn();
@@ -519,14 +482,10 @@ export class EnjoyHint {
   }
 
   renderLabelWithShape(
-    shapeData: ShapeData,
+    shapeData: RenderData,
     customBtnProps: {
-      nextButton:
-        | { className?: string | undefined; text?: string | undefined }
-        | undefined;
-      prevButton:
-        | { className?: string | undefined; text?: string | undefined }
-        | undefined;
+      nextButton: IButtonConfiguration | undefined;
+      prevButton: IButtonConfiguration | undefined;
     }
   ) {
     this.instance.renderLabelWithShape(shapeData, customBtnProps);

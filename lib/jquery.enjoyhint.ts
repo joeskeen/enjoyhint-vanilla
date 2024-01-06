@@ -1,7 +1,19 @@
-import * as KonvaMod from 'konva';
-// export {KonvaMod as Konva};
-import type KonvaType from 'konva';
+import { RenderData } from "./RenderData.js";
+import { registerEvent, unregisterEvent } from "./events.js";
+import { classes as cl, ids } from "./selectors.js";
+import { IButtonConfiguration } from "./step-configuration.js";
+
+// The typings for konva don't seem to work right, so we have to do this to keep
+// both TypeScript at build-time and the browser at run-time happy.
+import * as KonvaMod from "konva";
+import type KonvaType from "konva";
 export const Konva: typeof KonvaMod.default = KonvaMod.default ?? KonvaMod;
+
+export interface ICircleOptions {
+  x: number;
+  y: number;
+  r: number;
+}
 
 export interface IOptions {
   onNextClick: () => void;
@@ -54,27 +66,6 @@ export class EnjoyHintImpl {
   prevWindowHeight?: number;
   originalWidth = window.innerWidth;
   originalHeight = window.innerHeight;
-  //general classes
-  readonly gcl = {
-    chooser: "enjoyhint",
-  };
-
-  // classes
-  readonly cl = {
-    enjoy_hint: "enjoyhint",
-    hide: "enjoyhint_hide",
-    disable_events_element: "enjoyhint_disable_events",
-    btn: "enjoyhint_btn",
-    skip_btn: "enjoyhint_skip_btn",
-    close_btn: "enjoyhint_close_btn",
-    next_btn: "enjoyhint_next_btn",
-    previous_btn: "enjoyhint_prev_btn",
-    main_canvas: "enjoyhint_canvas",
-    main_svg: "enjoyhint_svg",
-    svg_wrapper: "enjoyhint_svg_wrapper",
-    svg_transparent: "enjoyhint_svg_transparent",
-    kinetic_container: "kinetic_container",
-  };
 
   canvasSize = {
     w: window.innerWidth * 1.4,
@@ -95,7 +86,7 @@ export class EnjoyHintImpl {
   leftDisEvents!: HTMLDivElement;
   rightDisEvents!: HTMLDivElement;
   canvas!: HTMLCanvasElement;
-  stepData: any;
+  renderData: any;
   customBtnProps: any;
 
   constructor(
@@ -108,35 +99,35 @@ export class EnjoyHintImpl {
 
   init() {
     const enjoyHintElement = document.createElement("div");
-    enjoyHintElement.classList.add(this.cl.enjoy_hint, this.cl.svg_transparent);
+    enjoyHintElement.classList.add(cl.enjoyHint.name);
     this.element.appendChild(enjoyHintElement);
     this.enjoyHintElement = enjoyHintElement;
 
     const svgWrapper = document.createElement("div");
-    svgWrapper.classList.add(this.cl.svg_wrapper, this.cl.svg_transparent);
+    svgWrapper.classList.add(cl.svgWrapper.name, cl.svgTransparent.name);
     enjoyHintElement.appendChild(svgWrapper);
 
     const stageContainer = document.createElement("div");
-    stageContainer.id = this.cl.kinetic_container;
+    stageContainer.id = ids.kineticContainer.id;
     enjoyHintElement.appendChild(stageContainer);
 
     const canvas = document.createElement("canvas");
-    canvas.id = "enj_canvas";
+    canvas.id = ids.canvas.id;
     canvas.width = this.canvasSize.w;
     canvas.height = this.canvasSize.h;
-    canvas.classList.add(this.cl.main_canvas);
+    canvas.classList.add(cl.mainCanvas.name);
     enjoyHintElement.appendChild(canvas);
     this.canvas = canvas;
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width", this.canvasSize.w.toString());
     svg.setAttribute("height", this.canvasSize.h.toString());
-    svg.classList.add(this.cl.main_canvas, this.cl.main_svg);
+    svg.classList.add(cl.mainSvg.name);
     svgWrapper.appendChild(svg);
 
     const defs = this.makeSVG("defs");
     const marker = this.makeSVG("marker", {
-      id: "arrowMarker",
+      id: ids.arrowMarker.id,
       viewBox: "0 0 36 21",
       refX: "21",
       refY: "10",
@@ -148,14 +139,14 @@ export class EnjoyHintImpl {
     const polyline = this.makeSVG("path", {
       style: "fill:none; stroke:rgb(255,255,255); stroke-width:2",
       d: "M0,0 c30,11 30,9 0,20",
-      id: "poliline",
+      id: ids.polyline.id,
     });
     marker.appendChild(polyline);
     defs.appendChild(marker);
     svg.appendChild(defs);
 
     const konvaStage = new Konva.Stage({
-      container: this.cl.kinetic_container,
+      container: ids.kineticContainer.id,
       width: this.canvasSize.w,
       height: this.canvasSize.h,
       scaleX: 1,
@@ -170,7 +161,7 @@ export class EnjoyHintImpl {
     });
 
     const topDisEvents = document.createElement("div");
-    topDisEvents.classList.add(this.cl.disable_events_element);
+    topDisEvents.classList.add(cl.disableEventsElement.name);
     enjoyHintElement.appendChild(topDisEvents);
     this.topDisEvents = topDisEvents;
 
@@ -192,16 +183,16 @@ export class EnjoyHintImpl {
 
     document
       .querySelectorAll("button")
-      .forEach((b) => b.addEventListener("focusout", stopPropagation));
-    topDisEvents.addEventListener("click", stopPropagation);
-    bottomDisEvents.addEventListener("click", stopPropagation);
-    leftDisEvents.addEventListener("click", stopPropagation);
-    rightDisEvents.addEventListener("click", stopPropagation);
+      .forEach((b) => registerEvent(b, "focusout", stopPropagation));
+    registerEvent(topDisEvents, "click", stopPropagation);
+    registerEvent(bottomDisEvents, "click", stopPropagation);
+    registerEvent(leftDisEvents, "click", stopPropagation);
+    registerEvent(rightDisEvents, "click", stopPropagation);
 
     const skipButton = document.createElement("div");
-    skipButton.classList.add(this.cl.btn, this.cl.skip_btn);
+    skipButton.classList.add(cl.btn.name, cl.skipBtn.name);
     skipButton.innerHTML = "Skip";
-    skipButton.addEventListener("click", () => {
+    registerEvent(skipButton, "click", () => {
       this.hide();
       this.options.onSkipClick();
     });
@@ -209,16 +200,16 @@ export class EnjoyHintImpl {
     this.skipButton = skipButton;
 
     const nextButton = document.createElement("div");
-    nextButton.classList.add(this.cl.btn, this.cl.next_btn);
+    nextButton.classList.add(cl.btn.name, cl.nextBtn.name);
     nextButton.innerHTML = "Next";
-    nextButton.addEventListener("click", () => this.options.onNextClick());
+    registerEvent(nextButton, "click", () => this.options.onNextClick());
     enjoyHintElement.appendChild(nextButton);
     this.nextButton = nextButton;
 
     const closeButton = document.createElement("div");
-    closeButton.classList.add(this.cl.close_btn);
+    closeButton.classList.add(cl.btn.name, cl.closeBtn.name);
     closeButton.innerHTML = "";
-    closeButton.addEventListener("click", () => {
+    registerEvent(closeButton, "click", () => {
       this.hide();
       this.options.onSkipClick();
     });
@@ -226,18 +217,20 @@ export class EnjoyHintImpl {
     this.closeButton = closeButton;
 
     const prevButton = document.createElement("div");
-    prevButton.classList.add(this.cl.btn, this.cl.previous_btn);
+    prevButton.classList.add(cl.btn.name, cl.previousBtn.name);
     prevButton.innerHTML = "Previous";
-    prevButton.addEventListener("click", () => this.options.onPrevClick());
+    registerEvent(prevButton, "click", () => this.options.onPrevClick());
     enjoyHintElement.appendChild(prevButton);
     this.prevButton = prevButton;
 
-    canvas.addEventListener("mousedown", (e) => {
+    registerEvent(canvas, "mousedown", (e) => {
+      const me = e as MouseEvent;
+
       canvas.style.left = "4000px";
 
       const BottomElement = document.elementFromPoint(
-        e.clientX,
-        e.clientY
+        me.clientX,
+        me.clientY
       ) as HTMLButtonElement;
       canvas.style.left = "0px";
 
@@ -249,7 +242,6 @@ export class EnjoyHintImpl {
     const circleR = 0;
     this.shapeInitShift = 130;
 
-    const that = this;
     const shape = new Konva.Shape({
       radius: circleR,
       center_x: -this.shapeInitShift,
@@ -284,26 +276,24 @@ export class EnjoyHintImpl {
     layer.add(shape);
     konvaStage.add(layer);
 
-    let doIt: number;
+    let doIt: ReturnType<typeof setTimeout>;
 
     const resizeHandler = () => {
       clearTimeout(doIt);
       this.nextButton.style.visibility = "hidden";
       this.prevButton.style.visibility = "hidden";
       this.skipButton.style.visibility = "hidden";
-      document.querySelector<HTMLElement>(".enjoy_hint_label")?.remove();
-      document.querySelector<HTMLElement>("#enjoyhint_arrpw_line")?.remove();
-      
-      if (
-        getComputedStyle(this.enjoyHintElement).visibility !== 'visible'
-      ) {
+      cl.label.element()?.remove();
+      ids.arrowLine.element()?.remove();
+
+      if (getComputedStyle(this.enjoyHintElement).visibility !== "visible") {
         this.stopFunction();
-        window.removeEventListener("resize", resizeHandler);
+        unregisterEvent(window, "resize", resizeHandler);
         return;
       }
 
       const boundingClientRect = document
-        .querySelector<HTMLElement>(this.stepData.enjoyHintElementSelector)!
+        .querySelector<HTMLElement>(this.renderData.enjoyHintElementSelector)!
         .getBoundingClientRect();
 
       this.shape.attrs.centerX = Math.round(
@@ -322,7 +312,9 @@ export class EnjoyHintImpl {
             (window.innerHeight || document.documentElement.clientHeight)
         ) {
           document
-            .querySelector<HTMLElement>(this.stepData.enjoyHintElementSelector)!
+            .querySelector<HTMLElement>(
+              this.renderData.enjoyHintElementSelector
+            )!
             .scrollIntoView();
         } else this.renderAfterResize();
       }, 150);
@@ -344,7 +336,7 @@ export class EnjoyHintImpl {
       konvaStage.draw();
     };
 
-    window.addEventListener("resize", resizeHandler);
+    registerEvent(window, "resize", resizeHandler);
 
     this.hide();
   }
@@ -379,32 +371,26 @@ export class EnjoyHintImpl {
 
   renderAfterResize() {
     const newDataCoords = document
-      .querySelector<HTMLElement>(this.stepData.enjoyHintElementSelector)!
+      .querySelector<HTMLElement>(this.renderData.enjoyHintElementSelector)!
       .getBoundingClientRect();
 
-    this.stepData.centerX = newDataCoords.left + newDataCoords.width / 2;
-    this.stepData.centerY = newDataCoords.top + newDataCoords.height / 2;
-    this.stepData.width = newDataCoords.width + 11;
-    this.stepData.height = newDataCoords.height + 11;
+    this.renderData.centerX = newDataCoords.left + newDataCoords.width / 2;
+    this.renderData.centerY = newDataCoords.top + newDataCoords.height / 2;
+    this.renderData.width = newDataCoords.width + 11;
+    this.renderData.height = newDataCoords.height + 11;
 
-    this.renderLabelWithShape(this.stepData, this.customBtnProps);
-    document.querySelector<HTMLElement>(
-      ".enjoyhint_next_btn"
-    )!.style.visibility = "visible";
-    document.querySelector<HTMLElement>(
-      ".enjoyhint_prev_btn"
-    )!.style.visibility = "visible";
-    document.querySelector<HTMLElement>(
-      ".enjoyhint_skip_btn"
-    )!.style.visibility = "visible";
+    this.renderLabelWithShape(this.renderData, this.customBtnProps);
+    cl.nextBtn.element()!.style.visibility = "visible";
+    cl.previousBtn.element()!.style.visibility = "visible";
+    cl.skipBtn.element()!.style.visibility = "visible";
   }
 
   show() {
-    this.enjoyHintElement?.classList.remove(this.cl.hide);
+    this.enjoyHintElement?.classList.remove(cl.hide.name);
   }
 
   hide() {
-    this.enjoyHintElement.classList.add(this.cl.hide);
+    this.enjoyHintElement.classList.add(cl.hide.name);
 
     const tween = new Konva.Tween({
       node: this.shape,
@@ -416,37 +402,37 @@ export class EnjoyHintImpl {
   }
 
   hideNextBtn() {
-    this.nextButton.classList.add(this.cl.hide);
+    this.nextButton.classList.add(cl.hide.name);
     this.nextBtn = "hide";
   }
 
   hidePrevBtn() {
-    this.prevButton.classList.add(this.cl.hide);
+    this.prevButton.classList.add(cl.hide.name);
     this.prevBtn = "hide";
   }
 
   showPrevBtn() {
-    this.prevButton.classList.remove(this.cl.hide);
+    this.prevButton.classList.remove(cl.hide.name);
     this.prevBtn = "show";
   }
 
   showNextBtn() {
-    this.nextButton.classList.remove(this.cl.hide);
+    this.nextButton.classList.remove(cl.hide.name);
     this.nextBtn = "show";
   }
 
   hideSkipBtn() {
-    this.skipButton.classList.add(this.cl.hide);
+    this.skipButton.classList.add(cl.hide.name);
   }
 
   showSkipBtn() {
-    this.skipButton.classList.remove(this.cl.hide);
+    this.skipButton.classList.remove(cl.hide.name);
   }
 
-  renderCircle(data: { r?: number; x?: number; y?: number }) {
-    const r = data.r || 0;
-    const x = data.x || 0;
-    const y = data.y || 0;
+  renderCircle(data?: ICircleOptions) {
+    const r = data?.r ?? 0;
+    const x = data?.x ?? 0;
+    const y = data?.y ?? 0;
 
     const tween = new Konva.Tween({
       node: this.shape,
@@ -561,8 +547,8 @@ export class EnjoyHintImpl {
     const text = data.text || "";
 
     const label = document.createElement("div");
-    label.classList.add("enjoy_hint_label");
-    label.id = "enjoyhint_label";
+    label.classList.add(cl.label.name);
+    label.id = ids.label.id;
     label.style.top = `${y}px`;
     label.style.left = `${x}px`;
     label.innerHTML = text;
@@ -600,7 +586,7 @@ export class EnjoyHintImpl {
     label.remove();
 
     setTimeout(() => {
-      document.querySelector("#enjoyhint_label")?.remove();
+      ids.label.element()?.remove();
       this.enjoyHintElement.appendChild(label);
     }, this.options.animationTime / 2);
 
@@ -626,15 +612,13 @@ export class EnjoyHintImpl {
   }
 
   private setMarkerColor(color: string) {
-    if (this.isValidColor(color)) {
-      document.querySelector("#poliline")!.setAttribute("stroke", color);
-      document.querySelector("#poliline")!.setAttribute("stroke", color);
+    if (!this.isValidColor(color)) {
+      color = "rgb(255,255,255)";
+      console.warn("Error: invalid color name property - " + color);
     }
 
-    document
-      .querySelector("#poliline")!
-      .setAttribute("stroke", "rgb(255,255,255)");
-    console.log("Error: invalid color name property - " + color);
+    ids.polyline.element()!.setAttribute("stroke", color);
+    ids.arrowLine.element()!.setAttribute("stroke", color);
   }
 
   private renderArrow(data: {
@@ -652,7 +636,7 @@ export class EnjoyHintImpl {
     let controlPointX = 0;
     let controlPointY = 0;
 
-    if (byTopSide === 'hor') {
+    if (byTopSide === "hor") {
       controlPointX = toX;
       controlPointY = fromY;
     } else {
@@ -660,29 +644,29 @@ export class EnjoyHintImpl {
       controlPointY = toY;
     }
 
-    this.enjoyHintElement.classList.add(this.cl.svg_transparent);
+    this.enjoyHintElement.classList.add(cl.svgTransparent.name);
 
     setTimeout(() => {
-      document.querySelector("#enjoyhint_arrpw_line")?.remove();
+      ids.arrowLine.element()?.remove();
 
       const d = `M${fromX},${fromY} Q${controlPointX},${controlPointY} ${toX},${toY}`;
       const path = this.makeSVG("path", {
         style: "fill:none; stroke:rgb(255,255,255); stroke-width:3",
-        "marker-end": "url(#arrowMarker)",
+        "marker-end": `url(${ids.arrowMarker.toString()})`,
         d,
-        id: "enjoyhint_arrpw_line",
+        id: ids.arrowLine.id,
       });
-      document.querySelector<HTMLElement>(".enjoyhint_svg")!.appendChild(path);
+      cl.mainSvg.element()!.appendChild(path);
 
-      if (this.stepData.arrowColor) {
-        this.setMarkerColor(this.stepData.arrowColor);
+      if (this.renderData.arrowColor) {
+        this.setMarkerColor(this.renderData.arrowColor);
       } else {
         document
-          .querySelector("#poliline")!
+          .querySelector(ids.polyline.toString())!
           .setAttribute("stroke", "rgb(255,255,255)");
       }
 
-      this.enjoyHintElement.classList.remove(this.cl.svg_transparent);
+      this.enjoyHintElement.classList.remove(cl.svgTransparent.name);
     }, this.options.animationTime / 2);
   }
 
@@ -692,8 +676,8 @@ export class EnjoyHintImpl {
     const text = data.text || "";
 
     const label = document.createElement("div");
-    label.classList.add("enjoy_hint_label");
-    label.id = "enjoyhint_label";
+    label.classList.add(cl.label.name);
+    label.id = ids.label.id;
     label.style.top = `${y}px`;
     label.style.left = `${x}px`;
     label.innerHTML = text;
@@ -739,16 +723,22 @@ export class EnjoyHintImpl {
     }
   }
 
-  renderLabelWithShape(data: any, customBtnProps: any) {
-    this.stepData = data;
+  renderLabelWithShape(
+    data: RenderData,
+    customBtnProps: {
+      nextButton: IButtonConfiguration | undefined;
+      prevButton: IButtonConfiguration | undefined;
+    }
+  ) {
+    this.renderData = data;
     this.customBtnProps = customBtnProps;
 
     const dialog = this.findParentDialog(
-      document.querySelector(this.stepData.enjoyHintElementSelector)
+      document.querySelector(this.renderData.enjoyHintElementSelector)
     );
 
     if (dialog != null) {
-      dialog.addEventListener("dialogClosing", () => {
+      registerEvent(dialog, "dialogClosing", () => {
         this.stopFunction();
         return;
       });
@@ -922,11 +912,10 @@ export class EnjoyHintImpl {
 
     let labelHorizontalSide = "oversized";
     for (let i = 0; i < areasPriority.length; i++) {
-      const name = areasPriority[i].name;
-      const area = areasPriority[i];
+      const { name, width, height } = areasPriority[i];
       if (
-        area.width > labelHorizontalSpaceRequired &&
-        area.height > labelVerticalSpaceRequired
+        width >= labelHorizontalSpaceRequired &&
+        height >= labelVerticalSpaceRequired
       ) {
         labelHorizontalSide = name;
       }
@@ -1119,62 +1108,6 @@ export class EnjoyHintImpl {
   }
 
   clear() {
-    this.canvas.getContext('2d')?.clearRect(0, 0, 3000, 2000);
+    this.canvas.getContext("2d")?.clearRect(0, 0, 3000, 2000);
   }
 }
-
-
-// const methods = {
-//   // init: function (options: IOptions) {
-//   //   return this.each(function () {
-//   //     // TODO: not sure what to do with this
-//   //     (function ($) {
-//   //       $.event.special.destroyed = {
-//   //         remove: function (o) {
-//   //           if (o.handler) {
-//   //             o.handler();
-//   //           }
-//   //         },
-//   //       };
-//   //     })($);
-
-//   //     return this;
-//   //   });
-//   // },
-
-// // not sure what the stop function bit is about
-//   render_label_with_shape: function (data, stopFunction, customBtnProps) {
-//     this.each(function () {
-//       that.stopFunction = stopFunction;
-//       this.enjoyhint_obj.renderLabelWithShape(data, customBtnProps);
-//     });
-
-//     return this;
-//   },
-
-//   // redo === disable
-//   redo_events_near_rect: function (rect) {
-//     that.disableEventsNearRect({
-//       top: rect.top,
-//       bottom: rect.bottom,
-//       left: rect.left,
-//       right: rect.right,
-//     });
-//   },
-
-//   clear: function () {
-//     this.each(function () {
-//       this.enjoyhint_obj.clear();
-//     });
-
-//     return this;
-//   },
-
-//   close: function (val) {
-//     this.each(function () {
-//       this.enjoyhint_obj.closePopdown();
-//     });
-
-//     return this;
-//   },
-// };

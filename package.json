@@ -2,10 +2,13 @@
   "name": "enjoyhint",
   "version": "4.0.1",
   "description": "Web-tool that provides the simplest way to create interactive tutorials and hints.",
-  "main": "enjoyhint.js",
+  "main": "dist/enjoyhint.js",
   "type": "module",
   "scripts": {
-    "build": "tsc -p .",
+    "dev": "vite",
+    "build": "typed-scss-modules lib && tsc -p . && vite build",
+    "preview": "vite preview",
+    "build:watch": "concurrently -n=tcm,vite,tsc \"typed-scss-modules -w lib\" \"vite build -w\" \"tsc -p . -w\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,7 +28,12 @@
   },
   "homepage": "https://github.com/xbsoftware/enjoyhint",
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "@types/node": "^20.10.6",
+    "concurrently": "^8.2.2",
+    "sass": "^1.69.7",
+    "typed-scss-modules": "^8.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11"
   },
   "dependencies": {
     "konva": "^9.3.0"
