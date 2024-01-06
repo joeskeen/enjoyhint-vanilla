@@ -34,26 +34,73 @@ Alternative way:
 ```
 
 #### Initialization and configuration:
-```javascript
-import EnjoyHint from 'enjoyhint-vanilla';
 
-//initialize instance
-var enjoyhint_instance = new EnjoyHint({});
+Here is a complete example of EnjoyHint-Vanilla that works on the page:
 
-//simple config. 
-//Only one step - highlighting(with description) "New" button 
-//hide EnjoyHint after a click on the button.
-var enjoyhint_script_steps = [
-  {
-    'click .new_btn' : 'Click the "New" button to start creating your project'
-  }  
-];
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
 
-//set script config
-enjoyhint_instance.set(enjoyhint_script_steps);
+    <!-- Enjoyhint library -->
+    <link href="node_modules/enjoyhint/enjoyhint.css" rel="stylesheet" />
 
-//run Enjoyhint script
-enjoyhint_instance.run();
+    <script type="importmap">
+      {
+        "imports": {
+          "enjoyhint": "./node_modules/enjoyhint/enjoyhint.js",
+          "konva": "./node_modules/enjoyhint/node_modules/konva/konva.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <button class="new_btn">+</button>
+    <button class="some_btn">Some btn</button>
+    <div class="some_panel">Some panel</div>
+
+    <script type="module">
+      import { EnjoyHint } from 'enjoyhint';
+
+      const run = (() => {
+        var options = {
+          'next #block': 'Hello.',
+          nextButton: { className: 'myNext', text: 'myNEXT' },
+          skipButton: { className: 'mySkip', text: 'mySKIP' },
+          prevButton: { className: 'myPrev', text: 'myPREV' }
+        };
+        //initialize instance
+        var enjoyhint_instance = new EnjoyHint(document.body, options);
+
+        //simple config.
+        //Only one step - highlighting(with description) "New" button
+        //hide EnjoyHint after a click on the button.
+        var enjoyhint_script_steps = [
+          {
+            'click .new_btn': 'Click the "New" button to start creating your project'
+          },
+          {
+            'click .some_btn': 'Click on this btn'
+          },
+          {
+            'click .some_panel': 'Click on this panel'
+          }
+        ];
+
+        //set script config
+        enjoyhint_instance.set(enjoyhint_script_steps);
+
+        //run Enjoyhint script
+        enjoyhint_instance.run();
+      })
+
+      setTimeout(run);
+    </script>
+  </body>
+</html>
 ```
 
 #### Script Configuration
