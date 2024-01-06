@@ -1,52 +1,42 @@
-EnjoyHint
+EnjoyHint-Vanilla
 =========
 **EnjoyHint** is a web-tool that provides the simplest way to create interactive tutorials and hints for your site or web-application. It can also be used to highlight and sign application elements.  
 
-EnjoyHint is free software distributed under the terms of MIT license.
+**EnjoyHint-Vanilla** a fork of EnjoyHint that removes the jQuery dependency.
+
+EnjoyHint-Vanilla is free software distributed under the terms of MIT license.
   
 #### Demo
 * [TODO app demo](http://xbsoftware.github.io/enjoyhint/) ([downloadable package](http://xbsoftware.github.io/enjoyhint/enjoyhint_todo_demo.zip))
 * [A small guide on EnjoyHint](http://xbsoftware.github.io/enjoyhint/example1.html)
 
 #### Dependencies
-EnjoyHint require the following plugins and libs:
+EnjoyHint-Vanilla require the following plugins and libs:
 
-* jQuery v3.5.1
-* jQuery.scrollTo v2.1.2
-* KineticJS > v5.1.0
+* `"konva": "^9.3.0"`
+
+(Konva is the successor to KineticJS, which was used by the original EnjoyHint. Konva is a 2d Canvas JavaScript framework for drawings shapes, animations, node nesting, layering, filtering, event handling, drag and drop and much more, and powers the tutorial highlighting experience in EnjoyHint-Vanilla.)
 
 #### Installation
-You can install it through `node` or `bower`package managers:
+You can install it through `node` package manager:
 ```
-npm install xbs-enjoyhint
-```
-```
-bower install xbs-enjoyhint
+npm install enjoyhint-vanilla
 ```
 Alternative way:
-- Download the latest version of EnjoyHint from GitHub.
-- Extract the archive with EnjoyHint.
-- Move the EnjoyHint directory to somewhere on your webserver.
-- Install dependencies `npm install` or `bower install` if you want to use internal libraries.
+- Download the latest version of EnjoyHint-Vanilla from GitHub.
+- Extract the archive with EnjoyHint-Vanilla.
+- Move the EnjoyHint-Vanilla directory to somewhere on your webserver.
+- Install dependencies `npm install` if you want to use internal libraries.
 - Insert next lines into your page's \<head\> tag:
 ```html
-  <!-- From external libraries -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/kineticjs/5.2.0/kinetic.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
-
-  <!-- Or from internal libraries from node_modules-->
-  <script src="<pathontheserver>/jquery/dist/jquery.min.js"></script>
-  <script src="<pathontheserver>/kinetic/kinetic.min.js"></script>
-  <script src="<pathontheserver>/jquery.scrollto/jquery.scrollTo.min.js"></script>
-
   <!-- Enjoyhint library -->
   <link href="<pathontheserver>/enjoyhint/enjoyhint.css" rel="stylesheet">
-  <script src="<pathontheserver>/enjoyhint/enjoyhint.min.js"></script>
 ```
 
 #### Initialization and configuration:
 ```javascript
+import EnjoyHint from 'enjoyhint-vanilla';
+
 //initialize instance
 var enjoyhint_instance = new EnjoyHint({});
 

@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "strict": true,
+        "rootDir": "./src",
+        "outDir": "./",
+        "baseUrl": "../",
+        "declaration": true,
+        "lib": [
+            "ES2022",
+            "DOM"
+        ],
+        "noEmitOnError": false
+    },
+    "include": [
+        "src/**/*.ts",
+        "node_modules/konva/lib/index.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+    ]
+}
