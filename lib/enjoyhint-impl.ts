@@ -1,47 +1,16 @@
-import { RenderData } from "./RenderData.js";
-import { registerEvent, unregisterEvent } from "./events.js";
+import { IRenderData } from "./types/IRenderData.js";
+import { registerEvent, unregisterEvent } from "./util/events.js";
 import { classes as cl, ids } from "./selectors.js";
-import { IButtonConfiguration } from "./step-configuration.js";
+import { IButtonConfiguration } from "./types/IStepConfiguration.js";
+import { ICircleOptions } from "./types/ICircleOptions.js";
+import { IOptions } from "./types/IOptions.js";
+import { roundRect } from "./util/roundRect.js";
 
 // The typings for konva don't seem to work right, so we have to do this to keep
 // both TypeScript at build-time and the browser at run-time happy.
 import * as KonvaMod from "konva";
 import type KonvaType from "konva";
 export const Konva: typeof KonvaMod.default = KonvaMod.default ?? KonvaMod;
-
-export interface ICircleOptions {
-  x: number;
-  y: number;
-  r: number;
-}
-
-export interface IOptions {
-  onNextClick: () => void;
-  onPrevClick: () => void;
-  onSkipClick: () => void;
-  fill: string;
-  animationTime: number;
-}
-
-export function roundRect(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-  ctx: CanvasRenderingContext2D
-) {
-  if (w < 2 * r) r = w / 2;
-  if (h < 2 * r) r = h / 2;
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-  return ctx;
-}
 
 export class EnjoyHintImpl {
   static readonly defaults: IOptions = {
@@ -724,7 +693,7 @@ export class EnjoyHintImpl {
   }
 
   renderLabelWithShape(
-    data: RenderData,
+    data: IRenderData,
     customBtnProps: {
       nextButton: IButtonConfiguration | undefined;
       prevButton: IButtonConfiguration | undefined;

@@ -1,22 +1,13 @@
-import { RenderData } from "./RenderData.js";
-import { EnjoyHintImpl, ICircleOptions } from "./jquery.enjoyhint.js";
+import { IRenderData } from "./types/IRenderData.js";
+import { EnjoyHintImpl } from "./enjoyhint-impl.js";
+import { ICircleOptions } from "./types/ICircleOptions.js";
 import {
   IButtonConfiguration,
   IStepConfiguration,
-} from "./step-configuration.js";
+} from "./types/IStepConfiguration.js";
 import { classes as cl, ids } from "./selectors.js";
-import { registerEvent, unregisterEvent, unregisterEvents } from "./events.js";
-
-export interface IEnjoyHintOptions {
-  onStart?: () => void;
-  onEnd?: () => void;
-  onSkip?: () => void;
-  onNext?: () => void;
-  btnPrevText?: string;
-  btnNextText?: string;
-  btnSkipText?: string;
-  backgroundColor?: string;
-}
+import { registerEvent, unregisterEvent, unregisterEvents } from "./util/events.js";
+import { IEnjoyHintOptions } from "./types/IEnjoyHintOptions.js";
 
 export class EnjoyHint {
   static readonly defaults: IEnjoyHintOptions = {
@@ -46,11 +37,11 @@ export class EnjoyHint {
   instance!: EnjoyHintImpl;
 
   constructor(
-    private readonly element: HTMLElement,
+    private readonly hostElement: HTMLElement,
     options: IEnjoyHintOptions = {}
   ) {
     this.options = { ...EnjoyHint.defaults, ...options };
-    this.originalElementOverflow = getComputedStyle(element).overflow;
+    this.originalElementOverflow = getComputedStyle(hostElement).overflow;
 
     this.init();
 
@@ -79,7 +70,7 @@ export class EnjoyHint {
       cl.enjoyHint.element()?.remove();
     }
 
-    this.element.style.overflow = "hidden";
+    this.hostElement.style.overflow = "hidden";
 
     registerEvent(document, "touchmove", this.lockTouch);
 
@@ -96,13 +87,13 @@ export class EnjoyHint {
       },
       fill: this.options.backgroundColor,
     };
-    this.instance = new EnjoyHintImpl(this.element, opts);
+    this.instance = new EnjoyHintImpl(this.hostElement, opts);
   }
 
   private destroyEnjoy() {
     unregisterEvents();
     cl.enjoyHint.element()?.remove();
-    this.element.style.overflow = this.originalElementOverflow;
+    this.hostElement.style.overflow = this.originalElementOverflow;
   }
 
   private clear() {
@@ -332,7 +323,7 @@ export class EnjoyHint {
           y: offset.top + Math.round(h / 2) - window.scrollY,
         };
 
-        const shapeData: RenderData = {
+        const shapeData: IRenderData = {
           enjoyHintElementSelector: stepData.selector,
           centerX: coords.x,
           centerY: coords.y,
@@ -435,7 +426,7 @@ export class EnjoyHint {
         break;
 
       default:
-        this.element.dispatchEvent(
+        this.hostElement.dispatchEvent(
           new CustomEvent(this.makeEventName(eventName, true))
         );
     }
@@ -482,7 +473,7 @@ export class EnjoyHint {
   }
 
   renderLabelWithShape(
-    shapeData: RenderData,
+    shapeData: IRenderData,
     customBtnProps: {
       nextButton: IButtonConfiguration | undefined;
       prevButton: IButtonConfiguration | undefined;

@@ -4,6 +4,7 @@
   "description": "Web-tool that provides the simplest way to create interactive tutorials and hints.",
   "main": "dist/enjoyhint.js",
   "type": "module",
+  "types": "dist/enjoyhint.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "typed-scss-modules lib && tsc -p . && vite build",
@@ -33,7 +34,8 @@
     "sass": "^1.69.7",
     "typed-scss-modules": "^8.0.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.11"
+    "vite": "^5.0.11",
+    "vite-plugin-dts": "^3.7.0"
   },
   "dependencies": {
     "konva": "^9.3.0"

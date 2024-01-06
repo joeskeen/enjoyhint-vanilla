@@ -1,4 +1,4 @@
-export interface RenderData {
+export interface IRenderData {
   enjoyHintElementSelector: string;
   centerX: number;
   centerY: number;

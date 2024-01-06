@@ -1,4 +1,4 @@
-import { Selector } from "./Selector.js";
+import { Selector } from "./util/Selector.js";
 import styles from './enjoyhint.module.scss';
 
 // classes
